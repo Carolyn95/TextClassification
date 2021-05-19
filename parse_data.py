@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 import pandas as pd
 import xml.etree.ElementTree as ET
+import numpy as np
 
 
 def data_xml_to_df(xml_file):
