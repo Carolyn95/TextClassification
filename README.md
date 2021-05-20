@@ -36,3 +36,5 @@ Output: aspect and polarity associating with a particular OTE
 ## Data engineering
 After preprocessing, turn raw xml data into dataframe, it looks like:
 ![xml2df](imgs/xml2df.png)
+
+## Word indexing & word embedding (w2v)
