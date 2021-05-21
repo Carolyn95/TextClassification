@@ -25,5 +25,11 @@ if __name__ == '__main__':
   embedding_size = embedding_matrix.shape[1]
   print('Vocabulary Size:', vocab_size)
   print('Embedding Size:', embedding_size)
-  pdb.set_trace()
+
+  pad_length = getMaxLength(df_new_train, df_new_test)
+  df = padSequence(df_new_test,
+                   pad_length,
+                   pad_direction='left',
+                   pad_token='<PAD>')
+  # pdb.set_trace()
   print()

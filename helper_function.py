@@ -184,3 +184,26 @@ def getEmbeddingMatrix(model_path, word_to_index, vocab_size=None):
   )
   embedding_matrix = embedding_matrix.astype(np.float32)
   return embedding_matrix
+
+
+def getMaxLength(*dfs):
+  df_all = pd.concat(dfs)
+  text_length = max(df_all['text'].apply(lambda x: x.split()).apply(len))
+  print(f'Maximum token length is {text_length}')
+  return text_length
+
+
+def padSequence(df, pad_length, pad_direction='left', pad_token='<PAD>'):
+  df['tokenized_text'] = df['text'].apply(lambda x: x.split(' '))
+  print(df.loc[10, 'tokenized_text'])
+  if pad_direction == 'left':
+    df['tokenized_text'].apply(
+        lambda x: x.extend(pad_token for _ in range(pad_length - len(x))))
+  elif pad_direction == 'right':
+    df['tokenized_text'] = df['tokenized_text'].apply(
+        lambda x: [pad_token for _ in range(pad_length - len(x))] + x)
+  else:
+    raise ValueError('Please specify a direction for padding.')
+
+  print(df.loc[10, 'tokenized_text'])
+  return df
