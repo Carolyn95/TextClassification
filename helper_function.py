@@ -207,3 +207,21 @@ def padSequence(df, pad_length, pad_direction='left', pad_token='<PAD>'):
 
   print(df.loc[10, 'tokenized_text'])
   return df
+
+
+def mapWord2Idx(text, word_to_index):
+  """Map from word to index.
+  """
+  if isinstance(text, str):
+    text = text.split(' ')
+  mapped_text = [word_to_index[token] for token in text]
+  # print(mapped_text)
+  return mapped_text
+
+
+def mapIdx2Word(indexes, index_to_word):
+  """Map from index to word.
+  """
+  mapped_text = [index_to_word[index] for index in indexes]
+  # print(mapped_text)
+  return mapped_text

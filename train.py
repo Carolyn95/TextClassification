@@ -11,8 +11,9 @@ if __name__ == '__main__':
   df_train = preprocess(df_train)
   explore(df_train, df_test)
   print(len(df_train), len(df_test))
-  df_new_train, df_new_test = process(df_train, df_test)
-  print(df_new_train.loc[42, 'text'])
+  df_train, df_test = process(df_train, df_test)
+  print(df_train.loc[42, 'text'])
+  # Word to index and Index to word transform
   word_to_index, index_to_word = createMappings(df_train, df_test)
 
   # GloVe 100d model
@@ -25,11 +26,16 @@ if __name__ == '__main__':
   embedding_size = embedding_matrix.shape[1]
   print('Vocabulary Size:', vocab_size)
   print('Embedding Size:', embedding_size)
+  pad_length = getMaxLength(df_train, df_test)
+  df_train = padSequence(df_train,
+                         pad_length,
+                         pad_direction='left',
+                         pad_token='<PAD>')
+  df_test = padSequence(df_test,
+                        pad_length,
+                        pad_direction='left',
+                        pad_token='<PAD>')
 
-  pad_length = getMaxLength(df_new_train, df_new_test)
-  df = padSequence(df_new_test,
-                   pad_length,
-                   pad_direction='left',
-                   pad_token='<PAD>')
-  # pdb.set_trace()
+  indexes = mapWord2Idx(df_test.loc[42, 'tokenized_text'], word_to_index)
+  tokens = mapIdx2Word(indexes, index_to_word)
   print()
