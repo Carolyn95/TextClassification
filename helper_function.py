@@ -225,3 +225,93 @@ def mapIdx2Word(indexes, index_to_word):
   mapped_text = [index_to_word[index] for index in indexes]
   # print(mapped_text)
   return mapped_text
+
+
+def getTagsIOB(text_seq, target_seq, ote_satrt, ote_stop):
+  """Get IOB2 tags for input sequence.
+
+     Args:
+     text_seq: a sequence of words
+     target_seq: sequence of aspect target words
+     ote_start: original starting target character index of the aspect target sequence (before preprocessing)
+     ote_stop: original ending character index of the aspect target sequence (before preprocessing)
+
+     Returns:
+     tag_seq: a one dimentional numpy array of IOB2 tags for the input
+  """
+
+  # helper function to get index which is the closest to ***
+  def getClosestSeqIndex(text_seq, ote_start, buffer=0):
+    """Find 1st aspect word by accumulatively adding the characters
+       in each sequence step and stop at the index where the summation
+       matches or exceeds ote_start.
+
+       Args:
+        text_seq: a sequence of strings
+        ote_start:
+
+       Returns:
+        tag_seq:
+    """
+    sum_ = 0
+    for idx in range(len(text_seq)):
+      sum_ += len(text_seq[idx])
+      if sum_ >= (int(ote_start - buffer)):
+        return idx
+    # if return never triggers
+    raise ValueError(
+        "Sum of characters never reaches ote_start, increase buffer.")
+
+  tag_seq = ['O' for word in text_seq]
+  tag_seq = np.array(tag_seq)
+  if target_seq == ['null'] or ote_stop == 0 or ote_start == 'NULL':
+    return tag_seq
+  matches = []
+  target_seq_len = len(target_seq)
+  # match a single word
+  if target_seq_len == 1:
+    target_seq = target_seq[0]  #empty list so dtype is string
+    for idx_ in range(len(text_seq)):
+      if text_seq[idx_] == target_seq:
+        matches.append(idx_)
+    if len(matches) == 1:
+      tag_seq[matches[0]] = 'B'
+    elif len(matches) > 1:
+      # use ote_start guess where the index should be
+      approximated_index = getClosestSeqIndex(text_seq, ote_start, buffer=5)
+      closet_index = min(matches, key=lambda x: abs(x - approximated_index))
+      tag_seq[closest_index] = 'B'
+    else:
+      raise ValueError('Matches are empty for sequence', text_seq,
+                       'for target sequence', target_seq)
+  # match a sequence
+  else:
+    for idx_ in range(len(text_seq) - target_seq_len + 1):
+      if text_seq[idx_:(idx_ + target_seq_len)] == target_seq:
+        matches.append(idx_)
+    if len(matches) == 1:
+      matched_index = matches[0]
+      tag_seq[matched_index:(matched_index + target_seq_len)] = 'I'
+      tag_seq[matched_index] = 'B'
+    elif len(matches) > 1:
+      approximated_index = getClosestSeqIndex(text_seq, ote_start, buffer=5)
+      closest_index = min(matches, key=lambda x: abs(x - approximated_index))
+      tag_seq[closest_index:(closest_index + target_seq_len)] = 'I'
+      tag_seq[closest_index] = 'B'
+    else:
+      raise ValueError('matches is empty for sequence:', text_seq,
+                       'for target sequence:', target_seq)
+  return tag_seq
+
+
+def generateTagsIOB(df, X_data):
+  """Generate IOB2 tags.
+  """
+  y_tags = np.empty(X_data.shape, dtype=str)
+  for idx in range(df.shape[0]):
+    # text_seq, target_seq, ote_satrt, ote_stop
+    y_tags[idx, :] = getTagsIOB(text_seq=X_data[idx, :],
+                                target_seq=df['tokenized_text'].iloc[idx],
+                                ote_start=df['ote_start'].iloc[idx],
+                                ote_stop=df['ote_stop'].iloc[idx])
+  return y_tags

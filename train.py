@@ -1,5 +1,6 @@
 from parse_data import data_xml_to_df
 from helper_function import *
+# https://rpmarchildon.com/wp-content/uploads/2018/10/RM-W-NLP-AspectEntity-vF1.html
 
 train_file = 'data/ABSA16_Restaurants_Train_SB1_v2.xml'
 test_file = 'data/restaurants_trial_english_sl.xml'
@@ -36,6 +37,9 @@ if __name__ == '__main__':
                         pad_direction='left',
                         pad_token='<PAD>')
 
-  indexes = mapWord2Idx(df_test.loc[42, 'tokenized_text'], word_to_index)
-  tokens = mapIdx2Word(indexes, index_to_word)
+  # indexes = mapWord2Idx(df_test.loc[42, 'tokenized_text'], word_to_index)
+  # tokens = mapIdx2Word(indexes, index_to_word)
+  # Takes in dataframe, after processing, take the elements out as arrays
+  padded_train_text = np.array()
+  padded_test_text = 
   print()
