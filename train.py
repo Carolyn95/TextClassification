@@ -10,7 +10,7 @@ if __name__ == '__main__':
   df_test = data_xml_to_df(test_file)
   df_test = preprocess(df_test)
   df_train = preprocess(df_train)
-  explore(df_train, df_test)
+  # explore(df_train, df_test)
   print(len(df_train), len(df_test))
   df_train, df_test = process(df_train, df_test)
   print(df_train.loc[42, 'text'])
@@ -30,16 +30,23 @@ if __name__ == '__main__':
   pad_length = getMaxLength(df_train, df_test)
   df_train = padSequence(df_train,
                          pad_length,
-                         pad_direction='left',
+                         pad_direction='right',
                          pad_token='<PAD>')
   df_test = padSequence(df_test,
                         pad_length,
-                        pad_direction='left',
+                        pad_direction='right',
                         pad_token='<PAD>')
 
   # indexes = mapWord2Idx(df_test.loc[42, 'tokenized_text'], word_to_index)
   # tokens = mapIdx2Word(indexes, index_to_word)
+
   # Takes in dataframe, after processing, take the elements out as arrays
-  padded_train_text = np.array()
-  padded_test_text = 
-  print()
+  padded_train_text = np.array(df_train['tokenized_text'])
+  padded_test_text = np.array(df_test['tokenized_text'])
+  y_train_IOB2 = generateTagsIOB(df_train, padded_train_text)
+  y_test_IOB2 = generateTagsIOB(df_test, padded_test_text)
+
+  pdb.set_trace()
+  print(ttt)
+  # use sequence tags(IOB2 scheme) to locate OTE words
+  #

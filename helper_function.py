@@ -195,17 +195,15 @@ def getMaxLength(*dfs):
 
 def padSequence(df, pad_length, pad_direction='left', pad_token='<PAD>'):
   df['tokenized_text'] = df['text'].apply(lambda x: x.split(' '))
-  print(df.loc[10, 'tokenized_text'])
-  if pad_direction == 'left':
+  if pad_direction == 'right':
     df['tokenized_text'].apply(
         lambda x: x.extend(pad_token for _ in range(pad_length - len(x))))
-  elif pad_direction == 'right':
+  elif pad_direction == 'left':
     df['tokenized_text'] = df['tokenized_text'].apply(
         lambda x: [pad_token for _ in range(pad_length - len(x))] + x)
   else:
     raise ValueError('Please specify a direction for padding.')
 
-  print(df.loc[10, 'tokenized_text'])
   return df
 
 
@@ -227,7 +225,7 @@ def mapIdx2Word(indexes, index_to_word):
   return mapped_text
 
 
-def getTagsIOB(text_seq, target_seq, ote_satrt, ote_stop):
+def getTagsIOB(text_seq, target_seq, ote_start, ote_stop):
   """Get IOB2 tags for input sequence.
 
      Args:
@@ -245,6 +243,8 @@ def getTagsIOB(text_seq, target_seq, ote_satrt, ote_stop):
     """Find 1st aspect word by accumulatively adding the characters
        in each sequence step and stop at the index where the summation
        matches or exceeds ote_start.
+       Slide the target sequence across the text sequence and look for
+       the index where they match.
 
        Args:
         text_seq: a sequence of strings
@@ -264,6 +264,7 @@ def getTagsIOB(text_seq, target_seq, ote_satrt, ote_stop):
 
   tag_seq = ['O' for word in text_seq]
   tag_seq = np.array(tag_seq)
+  target_seq = target_seq.split()
   if target_seq == ['null'] or ote_stop == 0 or ote_start == 'NULL':
     return tag_seq
   matches = []
@@ -304,14 +305,13 @@ def getTagsIOB(text_seq, target_seq, ote_satrt, ote_stop):
   return tag_seq
 
 
-def generateTagsIOB(df, X_data):
+def generateTagsIOB(df, padded_seq):
   """Generate IOB2 tags.
   """
-  y_tags = np.empty(X_data.shape, dtype=str)
+  y_tags = np.empty_like(padded_seq, dtype=object)
   for idx in range(df.shape[0]):
-    # text_seq, target_seq, ote_satrt, ote_stop
-    y_tags[idx, :] = getTagsIOB(text_seq=X_data[idx, :],
-                                target_seq=df['tokenized_text'].iloc[idx],
-                                ote_start=df['ote_start'].iloc[idx],
-                                ote_stop=df['ote_stop'].iloc[idx])
+    y_tags[idx] = getTagsIOB(text_seq=padded_seq[idx],
+                             target_seq=df['target'].iloc[idx],
+                             ote_start=df['ote_start'].iloc[idx],
+                             ote_stop=df['ote_stop'].iloc[idx])
   return y_tags
