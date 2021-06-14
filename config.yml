@@ -1,0 +1,3 @@
+POS_MODEL_PATH: 'stanford.postagger/models/english-bidirectional-distsim.tagger'
+POS_JAR_PATH: 'stanford.postagger/stanford-postagger.jar'
+SEED: 2021
