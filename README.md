@@ -38,3 +38,7 @@ After preprocessing, turn raw xml data into dataframe, it looks like:
 ![xml2df](imgs/xml2df.png)
 
 ## Word indexing & word embedding (w2v)
+
+
+## TODO:
+* process target column in order to match target in text

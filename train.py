@@ -1,4 +1,6 @@
 from parse_data import data_xml_to_df
+from tqdm import tqdm
+tqdm.pandas()
 from helper_function import *
 # https://rpmarchildon.com/wp-content/uploads/2018/10/RM-W-NLP-AspectEntity-vF1.html
 
@@ -8,6 +10,9 @@ test_file = 'data/restaurants_trial_english_sl.xml'
 if __name__ == '__main__':
   df_train = data_xml_to_df(train_file)
   df_test = data_xml_to_df(test_file)
+  # >>>>>>>
+  df_train = df_train.iloc[:20, :]
+  df_test = df_test.iloc[:20, :]
   df_test = preprocess(df_test)
   df_train = preprocess(df_train)
   # explore(df_train, df_test)
@@ -46,7 +51,13 @@ if __name__ == '__main__':
   y_train_IOB2 = generateTagsIOB(df_train, padded_train_text)
   y_test_IOB2 = generateTagsIOB(df_test, padded_test_text)
 
-  pdb.set_trace()
-  print(ttt)
   # use sequence tags(IOB2 scheme) to locate OTE words
-  #
+
+  df_train['POS_tags'] = df_train['text'].progress_apply(
+      lambda row: getPOSTags(row))
+  df_test['POS_tags'] = df_test['text'].progress_apply(
+      lambda row: getPOSTags(row))
+
+  pdb.set_trace()
+  # https://rpmarchildon.com/wp-content/uploads/2018/10/RM-W-NLP-AspectEntity-vF1.html
+  # IOB2_tag_to_int = {'O': 0, 'I': 1, 'B': 2}

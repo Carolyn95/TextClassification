@@ -6,22 +6,11 @@ import contractions
 import pdb
 import re
 from nltk.stem import WordNetLemmatizer
-# def createOTE(df):
-#   """Extract Opinion Target Expression from token index,
-#      storing as a new colomn 'ote' to dataframe.
+from nltk.tag.stanford import StanfordPOSTagger
+import yaml
 
-#      Args:
-#       df: original dataframe
-
-#      Return:
-#       df: processed dataframe with column 'ote'
-#   """
-#   df['ote'] = df.apply(lambda row: np.nan
-#                        if math.isnan(float(row['ote_start'])) else
-#                        (0 if row['ote_start'] == row['ote_stop'] else row[
-#                            'text'][int(row['ote_start']):int(row['ote_stop'])]),
-#                        axis=1)
-#   return df
+with open('./config.yml', 'r') as f:
+  config = yaml.load(f)
 
 
 def replaceNA(df):
@@ -86,7 +75,6 @@ def process(*dfs):
   for df in dfs:
     print(f'Before dataframe length {len(df)}')
     for i, row in df.iterrows():
-      # pdb.set_trace()
       text = row['text']
       # expand contractions and substitute slangs
       text = contractions.fix(text, slang=True)
@@ -165,7 +153,7 @@ def getEmbeddingMatrix(model_path, word_to_index, vocab_size=None):
   # randomly initialize the embedding matrix (vocab_size * embedding_size)
   vocab_size = vocab_size if vocab_size else len(word_to_index)
   embedding_size = len(list(embeddings.values())[0])
-  np.random.seed(2021)
+  np.random.seed(config['SEED'])
   embedding_matrix = np.random.uniform(-1, 1, size=(vocab_size, embedding_size))
 
   # replace row with corresponding embedding vector if a given word is within the embedding vocab
@@ -254,6 +242,7 @@ def getTagsIOB(text_seq, target_seq, ote_start, ote_stop):
         tag_seq:
     """
     sum_ = 0
+    ote_start = int(ote_start)
     for idx in range(len(text_seq)):
       sum_ += len(text_seq[idx])
       if sum_ >= (int(ote_start - buffer)):
@@ -264,8 +253,8 @@ def getTagsIOB(text_seq, target_seq, ote_start, ote_stop):
 
   tag_seq = ['O' for word in text_seq]
   tag_seq = np.array(tag_seq)
-  target_seq = target_seq.split()
-  if target_seq == ['null'] or ote_stop == 0 or ote_start == 'NULL':
+  target_seq = target_seq.lower().split()
+  if target_seq == ['NULL'] or ote_stop == 0 or ote_start == 'NULL':
     return tag_seq
   matches = []
   target_seq_len = len(target_seq)
@@ -280,11 +269,8 @@ def getTagsIOB(text_seq, target_seq, ote_start, ote_stop):
     elif len(matches) > 1:
       # use ote_start guess where the index should be
       approximated_index = getClosestSeqIndex(text_seq, ote_start, buffer=5)
-      closet_index = min(matches, key=lambda x: abs(x - approximated_index))
+      closest_index = min(matches, key=lambda x: abs(x - approximated_index))
       tag_seq[closest_index] = 'B'
-    else:
-      raise ValueError('Matches are empty for sequence', text_seq,
-                       'for target sequence', target_seq)
   # match a sequence
   else:
     for idx_ in range(len(text_seq) - target_seq_len + 1):
@@ -299,9 +285,7 @@ def getTagsIOB(text_seq, target_seq, ote_start, ote_stop):
       closest_index = min(matches, key=lambda x: abs(x - approximated_index))
       tag_seq[closest_index:(closest_index + target_seq_len)] = 'I'
       tag_seq[closest_index] = 'B'
-    else:
-      raise ValueError('matches is empty for sequence:', text_seq,
-                       'for target sequence:', target_seq)
+
   return tag_seq
 
 
@@ -315,3 +299,22 @@ def generateTagsIOB(df, padded_seq):
                              ote_start=df['ote_start'].iloc[idx],
                              ote_stop=df['ote_stop'].iloc[idx])
   return y_tags
+
+
+def getPOSTags(sentence):
+  """Generate POS tags with Stanford POS tagger. 
+    Use Standford POS tagger as annotation model.
+    https://www.ling.upenn.edu/courses/Fall_2003/ling001/penn_treebank_pos.html
+
+    Args:
+      sentence: a sequence of sentence text
+    
+    Returns:
+      tags: POS tags
+  """
+  pos_path = config['POS_MODEL_PATH']
+  pos_jar = config['POS_JAR_PATH']
+  postagger = StanfordPOSTagger(pos_path, pos_jar)
+  word_tags = postagger.tag(sentence.split())
+  tags = [list(t) for t in zip(*word_tags)][1]
+  return tags
